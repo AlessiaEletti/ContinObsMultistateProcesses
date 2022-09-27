@@ -8,4 +8,4 @@ This repository contains the code used to produce the analysis of primary breast
 
 The data are openly accessible and originate from the *Rotterdam Breast Cancer Study*. Note that the analysis should not be used to make epidemiological claims and serves an illustrative purpose only. 
 
-The models are fitted using the R package `GJRM`. Prediction on the transition probabilities scale are carried out using a modified version of the 'mssample()' function from the R package 'mstate'.
+The models are fitted using the R package `GJRM`. Prediction on the transition probabilities scale are carried out using a modified version of the `mssample()` function from the R package `mstate`.
