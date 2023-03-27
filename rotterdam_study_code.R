@@ -41,25 +41,26 @@ mex <- transform(mex,
 # **************** #
 library(GJRM)
 
-c.ar.GJRM = gamlss( list( Tstop ~ s(log(Tstop), bs = 'mpi') + s(age) + size2 + size3 + s(nodes) + log(pr_1+1) + hormon +
-                            size2:nsx(log(Tstop), df = 1) + size3:nsx(log(Tstop), df = 1) + pr_1:nsx(log(Tstop), df = 1) ),
-                    surv = TRUE, margin = 'PH',
-                    data = mex[mex$trans == 1, ],
-                    type = 'R',
-                    cens = status) 
-summary(c.ar.GJRM)
-AIC(c.ar.GJRM)
-BIC(c.ar.GJRM)
+out.ar = gamlss(list(Tstop ~ s(log(Tstop), bs = 'mpi') + s(age) + size2 + size3 + s(nodes) + s(pr_1) + hormon +
+                       ti(log(Tstop), pr_1)), surv = TRUE, margin = 'PH',
+                data = mex[mex$trans == 1, ],
+                type = 'R',
+                cens = status)
+conv.check(out.ar)
+summary(out.ar)
+AIC(out.ar)
+BIC(out.ar)
 
-
-c.ad.GJRM = gamlss( list(Tstop ~ s(log(Tstop), bs = 'mpi') + age + size2 + size3 + nodes + log(pr_1+1) + hormon),
-                    surv = TRUE, margin = 'PH',
-                    data = mex[mex$trans == 2, ],
-                    type = 'R',
-                    cens = status)
-summary(c.ad.GJRM)
-AIC(c.ad.GJRM)
-BIC(c.ad.GJRM)
+out.ad = gamlss( list(Tstop ~ s(log(Tstop), bs = 'mpi') + s(age) + size2 + size3 + s(nodes) + s(pr_1) + hormon +
+                        ti(log(Tstop), pr_1)),
+                 surv = TRUE, margin = 'PH',
+                 data = mex[mex$trans == 2, ],
+                 type = 'R',
+                 cens = status)
+conv.check(out.ad)
+summary(out.ad)
+AIC(out.ad)
+BIC(out.ad)
 
 
 # define status indicator
@@ -67,25 +68,28 @@ status.factor = ifelse(mex$status == 0, 'R', 'U')
 status.factor[mex$Tstart > 0] = paste(status.factor[mex$Tstart > 0], 'T', sep = '')
 status.factor = as.factor(status.factor)
 
-c.rd.GJRM = gamlss( list(Tstop ~ s(log(Tstop), bs = 'mpi') + age + size2 + size3 + s(nodes) + log(pr_1+1) + hormon +
-                           pr_1:nsx(log(Tstop), df = 1)),
-                    surv = TRUE, margin = 'PH',
-                    data = mex[mex$trans == 3, ],
-                    truncation.time = 'Tstart',
-                    type = 'mixed',
-                    cens = status.factor[mex$trans == 3])
-
+out.rd = gamlss( list(Tstop ~ s(log(Tstop), bs = 'mpi') + s(age) + size2 + size3 + s(nodes) + s(pr_1) + hormon +
+                        ti(log(Tstop), pr_1)),
+                 surv = TRUE, margin = 'PH',
+                 data = mex[mex$trans == 3, ],
+                 truncation.time = 'Tstart',
+                 type = 'mixed',
+                 cens = status.factor[mex$trans == 3])
+conv.check(out.rd)
+summary(out.rd)
+AIC(out.rd)
+BIC(out.rd)
 
 
 
 # Smooths from 1-2 transition
-plot(c.ar.GJRM, eq = 1, pages = 1)
+plot(out.ar, eq = 1, pages = 1, pers = TRUE, phi = 10, theta = -70)
 
 # Smooths from 1-3 transition
-plot(c.ad.GJRM, eq = 1, pages = 1)
+plot(out.ad, eq = 1, pages = 1, pers = TRUE, phi = 20, theta = -70)
 
 # Smooths from 2-3 transition
-plot(c.rd.GJRM, eq = 1, pages = 1)
+plot(out.rd, eq = 1, pages = 1, pers = TRUE, phi = 20, theta = -70)
 
 
 
@@ -99,7 +103,7 @@ library(mstate)
 # For prediction of transition probabilities
 
 par(mfrow = c(3,3),
-    mar = c(5, 5, 4, 2) + 0.1)
+    mar = c(5, 5.5, 4, 2) + 0.1)
 
 times = seq(0, 15, length = 100) 
 
@@ -120,13 +124,13 @@ for(i in 1:9){
   
   newdata = data.frame(age = 54, size2 = size2.plots[i], size3 = size3.plots[i], nodes = nodes.plots[i], pr_1 = 3, hormon = 1)
   
-  pred.ar.test =  hazsurv.plot(c.ar.GJRM, eq = 1, t.vec = times, newdata = newdata,
+  pred.ar.test =  hazsurv.plot(out.ar, eq = 1, t.vec = times, newdata = newdata,
                                type = 'cumhaz', plot.out = F, n.sim = 200) 
   
-  pred.ad.test =  hazsurv.plot(c.ad.GJRM, eq = 1, t.vec = times, newdata = newdata,
+  pred.ad.test =  hazsurv.plot(out.ad, eq = 1, t.vec = times, newdata = newdata,
                                type = 'cumhaz', plot.out = F, n.sim = 200)
   
-  pred.rd.test =  hazsurv.plot(c.rd.GJRM, eq = 1, t.vec = times, newdata = newdata,
+  pred.rd.test =  hazsurv.plot(out.rd, eq = 1, t.vec = times, newdata = newdata,
                                type = 'cumhaz', plot.out = F, n.sim = 200)
   
   if(i == 1){ # save for later plot (of 95% confidence intervals)
@@ -137,9 +141,9 @@ for(i in 1:9){
   
   Hazprep = data.frame(time = rep(times, 3), 
                        Haz = c(pred.ar.test$ch, pred.ad.test$ch, pred.rd.test$ch), 
-                       trans = c(rep(1, length(times)), 
-                                 rep(2, length(times)),
-                                 rep(3, length(times))))
+                       trans = c(rep(1, length(times)), # health -> relapse
+                                 rep(2, length(times)), # health -> death
+                                 rep(3, length(times)))) # relapse -> death
   
   
   set.seed(432)
@@ -154,7 +158,7 @@ for(i in 1:9){
   if(i == 7) ylab = 'Nodes = 20\nProbability'
   
   plot(probs.test$time, probs.test$pstate1, type = 'l', lwd = 2, col = 'grey50', ylim = c(0,1),
-       xlab = 'Follow-up time', main = main, ylab = ylab)
+       xlab = 'Follow-up time', main = main, ylab = ylab, cex.lab = 1.5)
   polygon(c(probs.test$time, rev(probs.test$time)), c(probs.test$pstate1+probs.test$pstate2, probs.test$pstate1+probs.test$pstate2+probs.test$pstate3),
           col = 'grey90', 
           border = NA)
@@ -168,6 +172,7 @@ for(i in 1:9){
   lines(probs.test$time, probs.test$pstate1+probs.test$pstate2+probs.test$pstate3, lwd = 2, col = 'grey90')
   
 }
+
 
 
 # ***************************************************************** #
@@ -232,19 +237,20 @@ p.rd.CI = matrixStats::rowQuantiles(p.rd.sim, probs = c(0.025, 0.975))
 # Plots of estimated transition probabilities with 95% confidence intervals
 par(mfrow = c(1,3))
 plot(probs.test$time, probs.test$pstate1, type = 'l', lwd = 1, ylim = c(0,1),
-     ylab = 'Probabilities', xlab = 'Follow-up time')
+     ylab = 'Probabilities', xlab = 'Follow-up time', cex.lab = 1.5)
 lines(probs.test$time, p.ar.CI[,1], lty = 2, lwd = 1)
 lines(probs.test$time, p.ar.CI[,2], lty = 2, lwd = 1)
 
 plot(probs.test$time, probs.test$pstate2, type = 'l', lwd = 1, ylim = c(0,1),
-     ylab = 'Probabilities', xlab = 'Follow-up time')
+     ylab = 'Probabilities', xlab = 'Follow-up time', cex.lab = 1.5)
 lines(probs.test$time, p.ad.CI[,1], lty = 2, lwd = 1)
 lines(probs.test$time, p.ad.CI[,2], lty = 2, lwd = 1)
 
 plot(probs.test$time, probs.test$pstate3, type = 'l', lwd = 1, ylim = c(0,1),
-     ylab = 'Probabilities', xlab = 'Follow-up time')
+     ylab = 'Probabilities', xlab = 'Follow-up time', cex.lab = 1.5)
 lines(probs.test$time, p.rd.CI[,1], lty = 2, lwd = 1)
 lines(probs.test$time, p.rd.CI[,2], lty = 2, lwd = 1)
+
 
 # ****************************************************************************************************************
 
@@ -254,29 +260,34 @@ lines(probs.test$time, p.rd.CI[,2], lty = 2, lwd = 1)
 # PLOTS OF THE ESTIMATED TRANSITION INTENSITIES ####
 # ************************************************ #
 
+cex.lab = 1.5
+cex.axis = 1.2
+
 par(mfrow = c(1,1))
 # Transition 1-2
-hazsurv.plot(c.ar.GJRM, eq = 1, t.vec = seq(min(mex$Tstop), max(mex$Tstop),
-                                                     length.out = 1000), newdata = data.frame(age = 54, size2 = 0, size3 = 1, nodes = 10, pr_1 = 3, hormon = 1), type = 'hazard',
-                      ylab = 'Health to Relapse transition intensity', xlab = 'Time since surgery (years)')
+hazsurv.plot(out.ar, eq = 1, t.vec = seq(min(mex$Tstop), max(mex$Tstop),
+                                         length.out = 1000), newdata = data.frame(age = 54, size2 = 0, size3 = 1, nodes = 10, pr_1 = 3, hormon = 1), type = 'hazard',
+             ylab = 'Health to Relapse trans. intensity', xlab = 'Time since surgery (years)', 
+             cex.lab = cex.lab, cex.axis = cex.axis, n.sim = 1000) 
 rug(mex$Tstop[mex$trans == 1])
-abline(v = min(mex$Tstop[mex$trans == 1]), lty = 2, col = 'red')
+abline(v = min(mex$Tstop[mex$trans == 1]), lty = 3)
 
 
 # Transition 1-3
-hazsurv.plot(c.ad.GJRM, eq = 1, t.vec = seq(min(mex$Tstop), max(mex$Tstop),
-                                                     length.out = 1000), newdata = data.frame(age = 54, size2 = 0, size3 = 1, nodes = 10, pr_1 = 3, hormon = 1), type = 'hazard',
-                      ylab = 'Health to Death transition intensity', xlab = 'Time since surgery (years)')
+hazsurv.plot(out.ad, eq = 1, t.vec = seq(min(mex$Tstop), max(mex$Tstop),
+                                         length.out = 1000), newdata = data.frame(age = 54, size2 = 0, size3 = 1, nodes = 10, pr_1 = 3, hormon = 1), type = 'hazard',
+             ylab = 'Health to Death trans. intensity', xlab = 'Time since surgery (years)', 
+             cex.lab = cex.lab, cex.axis = cex.axis)
 rug(mex$Tstop[mex$trans == 2])
-abline(v = min(mex$Tstop[mex$trans == 2]), lty = 2, col = 'red')
+abline(v = min(mex$Tstop[mex$trans == 2]), lty = 3)
+
 
 # Transition 2-3
-hazsurv.plot(c.rd.GJRM, eq = 1, t.vec = seq(min(mex$Tstop), max(mex$Tstop), length.out = 1000), newdata = data.frame(age = 54, size2 = 0, size3 = 1, nodes = 10, pr_1 = 3, hormon = 1), type = 'hazard',
-                      ylab = 'Relapse to Death transition intensity', xlab = 'Time since surgery (years)')
+hazsurv.plot(out.rd, eq = 1, t.vec = seq(min(mex$Tstop), max(mex$Tstop), length.out = 1000), newdata = data.frame(age = 54, size2 = 0, size3 = 1, nodes = 10, pr_1 = 3, hormon = 1), type = 'hazard',
+             ylab = 'Relapse to Death trans. intensity', xlab = 'Time since surgery (years)', 
+             cex.lab = cex.lab, cex.axis = cex.axis)
 rug(mex$Tstop[mex$trans == 3])
-abline(v = min(mex$Tstop[mex$trans == 3]), lty = 2, col = 'red')
-
-
+abline(v = min(mex$Tstop[mex$trans == 3]), lty = 3)
 
 
 # ****************************** #
@@ -337,5 +348,14 @@ pred.rd.test =  hazsurv.plot(c.rd.GJRM.noCov, eq = 1, t.vec = times, newdata = d
                              plot.out = T, xlab = 'Follow-up time (years since surgery)', ylab = 'Baseline Cumulative Hazard',
                              ylim = c(0,4.5), intervals = F)
 grid(nx = NA, ny = NULL)
+
+
+
+
+
+
+
+
+
 
 
