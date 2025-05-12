@@ -42,9 +42,9 @@ mex <- transform(mex,
 library(GJRM)
 
 out.ar = gamlss(list(Tstop ~ s(log(Tstop), bs = 'mpi') + s(age) + size2 + size3 + s(nodes) + s(pr_1) + hormon +
-                       ti(log(Tstop), pr_1)), surv = TRUE, margin = 'PH',
+                       ti(log(Tstop), pr_1)), family = '-cloglog',
                 data = mex[mex$trans == 1, ],
-                type = 'R',
+                type.cens = 'R',
                 cens = status)
 conv.check(out.ar)
 summary(out.ar)
@@ -53,9 +53,9 @@ BIC(out.ar)
 
 out.ad = gamlss( list(Tstop ~ s(log(Tstop), bs = 'mpi') + s(age) + size2 + size3 + s(nodes) + s(pr_1) + hormon +
                         ti(log(Tstop), pr_1)),
-                 surv = TRUE, margin = 'PH',
+                 family = '-cloglog',
                  data = mex[mex$trans == 2, ],
-                 type = 'R',
+                 type.cens = 'R',
                  cens = status)
 conv.check(out.ad)
 summary(out.ad)
@@ -70,10 +70,10 @@ status.factor = as.factor(status.factor)
 
 out.rd = gamlss( list(Tstop ~ s(log(Tstop), bs = 'mpi') + s(age) + size2 + size3 + s(nodes) + s(pr_1) + hormon +
                         ti(log(Tstop), pr_1)),
-                 surv = TRUE, margin = 'PH',
+                 family = '-cloglog',
                  data = mex[mex$trans == 3, ],
                  truncation.time = 'Tstart',
-                 type = 'mixed',
+                 type.cens = 'mixed',
                  cens = status.factor[mex$trans == 3])
 conv.check(out.rd)
 summary(out.rd)
@@ -124,14 +124,14 @@ for(i in 1:9){
   
   newdata = data.frame(age = 54, size2 = size2.plots[i], size3 = size3.plots[i], nodes = nodes.plots[i], pr_1 = 3, hormon = 1)
   
-  pred.ar.test =  hazsurv.plot(out.ar, eq = 1, t.vec = times, newdata = newdata,
-                               type = 'cumhaz', plot.out = F, n.sim = 200) 
+  pred.ar.test =  haz.surv(out.ar, eq = 1, t.vec = times, newdata = newdata,
+                               type = 'cum.haz', plot.out = F, n.sim = 200) 
   
-  pred.ad.test =  hazsurv.plot(out.ad, eq = 1, t.vec = times, newdata = newdata,
-                               type = 'cumhaz', plot.out = F, n.sim = 200)
+  pred.ad.test =  haz.surv(out.ad, eq = 1, t.vec = times, newdata = newdata,
+                               type = 'cum.haz', plot.out = F, n.sim = 200)
   
-  pred.rd.test =  hazsurv.plot(out.rd, eq = 1, t.vec = times, newdata = newdata,
-                               type = 'cumhaz', plot.out = F, n.sim = 200)
+  pred.rd.test =  haz.surv(out.rd, eq = 1, t.vec = times, newdata = newdata,
+                               type = 'cum.haz', plot.out = F, n.sim = 200)
   
   if(i == 1){ # save for later plot (of 95% confidence intervals)
     pred.ar.test.save = pred.ar.test
@@ -179,7 +179,7 @@ for(i in 1:9){
 # OBTAINING CONFIDENCE INTERVALS FOR THE TRANSITION PROBABILTIES ####
 # ***************************************************************** #
 
-# Since hazsurv.plot already provides simulated cumulative intensity
+# Since haz.surv already provides simulated cumulative intensity
 # functions (to be used for computation of corresponding
 # confidence interval) we can use these to obtain an equal number of probabilities and then get 
 # quantiles of these.
@@ -265,7 +265,7 @@ cex.axis = 1.2
 
 par(mfrow = c(1,1))
 # Transition 1-2
-hazsurv.plot(out.ar, eq = 1, t.vec = seq(min(mex$Tstop), max(mex$Tstop),
+haz.surv(out.ar, eq = 1, t.vec = seq(min(mex$Tstop), max(mex$Tstop),
                                          length.out = 1000), newdata = data.frame(age = 54, size2 = 0, size3 = 1, nodes = 10, pr_1 = 3, hormon = 1), type = 'hazard',
              ylab = 'Health to Relapse trans. intensity', xlab = 'Time since surgery (years)', 
              cex.lab = cex.lab, cex.axis = cex.axis, n.sim = 1000) 
@@ -274,7 +274,7 @@ abline(v = min(mex$Tstop[mex$trans == 1]), lty = 3)
 
 
 # Transition 1-3
-hazsurv.plot(out.ad, eq = 1, t.vec = seq(min(mex$Tstop), max(mex$Tstop),
+haz.surv(out.ad, eq = 1, t.vec = seq(min(mex$Tstop), max(mex$Tstop),
                                          length.out = 1000), newdata = data.frame(age = 54, size2 = 0, size3 = 1, nodes = 10, pr_1 = 3, hormon = 1), type = 'hazard',
              ylab = 'Health to Death trans. intensity', xlab = 'Time since surgery (years)', 
              cex.lab = cex.lab, cex.axis = cex.axis)
@@ -283,7 +283,7 @@ abline(v = min(mex$Tstop[mex$trans == 2]), lty = 3)
 
 
 # Transition 2-3
-hazsurv.plot(out.rd, eq = 1, t.vec = seq(min(mex$Tstop), max(mex$Tstop), length.out = 1000), newdata = data.frame(age = 54, size2 = 0, size3 = 1, nodes = 10, pr_1 = 3, hormon = 1), type = 'hazard',
+haz.surv(out.rd, eq = 1, t.vec = seq(min(mex$Tstop), max(mex$Tstop), length.out = 1000), newdata = data.frame(age = 54, size2 = 0, size3 = 1, nodes = 10, pr_1 = 3, hormon = 1), type = 'hazard',
              ylab = 'Relapse to Death trans. intensity', xlab = 'Time since surgery (years)', 
              cex.lab = cex.lab, cex.axis = cex.axis)
 rug(mex$Tstop[mex$trans == 3])
@@ -325,26 +325,26 @@ c.rd.GJRM.noCov = gamlss( list(Tstop ~ s(log(Tstop), bs = 'mpi') ),
 # For plotting of estimated cumulative hazard functions (when no covariate were included in model fitting)
 times = seq(0, max(mex$Tstop), length = 2000) 
 par(mfrow = c(2,2))
-pred.ar.test =  hazsurv.plot(c.ar.GJRM.noCov, eq = 1, t.vec = times, newdata = data.frame(age = 54, size2 = 0, size3 = 0, nodes = 10, pr_1 = 3,
+pred.ar.test =  haz.surv(c.ar.GJRM.noCov, eq = 1, t.vec = times, newdata = data.frame(age = 54, size2 = 0, size3 = 0, nodes = 10, pr_1 = 3,
                                                                                           hormon = 1), 
                              baseline = F,
-                             type = 'cumhaz', pch = 19,
+                             type = 'cum.haz', pch = 19,
                              plot.out = T, xlab = 'Follow-up time (years since surgery)', ylab = 'Baseline Cumulative Hazard',
                              ylim = c(0, 4.5), intervals = F)
 grid(nx = NA, ny = NULL)
 
-pred.ad.test =  hazsurv.plot(c.ad.GJRM.noCov, eq = 1, t.vec = times, newdata = data.frame(age = 54, size2 = 0, size3 = 0, nodes = 10, pr_1 = 3,
+pred.ad.test =  haz.surv(c.ad.GJRM.noCov, eq = 1, t.vec = times, newdata = data.frame(age = 54, size2 = 0, size3 = 0, nodes = 10, pr_1 = 3,
                                                                                           hormon = 1), 
                              baseline = TRUE,
-                             type = 'cumhaz', pch = 19,
+                             type = 'cum.haz', pch = 19,
                              plot.out = T, xlab = 'Follow-up time (years since surgery)', ylab = 'Baseline Cumulative Hazard',
                              ylim = c(0, 4.5), intervals = F)
 grid(nx = NA, ny = NULL)
 
-pred.rd.test =  hazsurv.plot(c.rd.GJRM.noCov, eq = 1, t.vec = times, newdata = data.frame(age = 54, size2 = 0, size3 = 0, nodes = 10, pr_1 = 3,
+pred.rd.test =  haz.surv(c.rd.GJRM.noCov, eq = 1, t.vec = times, newdata = data.frame(age = 54, size2 = 0, size3 = 0, nodes = 10, pr_1 = 3,
                                                                                           hormon = 1), 
                              baseline = TRUE,
-                             type = 'cumhaz', pch = 19,
+                             type = 'cum.haz', pch = 19,
                              plot.out = T, xlab = 'Follow-up time (years since surgery)', ylab = 'Baseline Cumulative Hazard',
                              ylim = c(0,4.5), intervals = F)
 grid(nx = NA, ny = NULL)
