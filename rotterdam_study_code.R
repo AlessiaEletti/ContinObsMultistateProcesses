@@ -125,13 +125,13 @@ for(i in 1:9){
   newdata = data.frame(age = 54, size2 = size2.plots[i], size3 = size3.plots[i], nodes = nodes.plots[i], pr_1 = 3, hormon = 1)
   
   pred.ar.test =  haz.surv(out.ar, eq = 1, t.vec = times, newdata = newdata,
-                               type = 'cum.haz', plot.out = F, n.sim = 200) 
+                               type = 'cum.haz', plot = F, n.sim = 200) 
   
   pred.ad.test =  haz.surv(out.ad, eq = 1, t.vec = times, newdata = newdata,
-                               type = 'cum.haz', plot.out = F, n.sim = 200)
+                               type = 'cum.haz', plot = F, n.sim = 200)
   
   pred.rd.test =  haz.surv(out.rd, eq = 1, t.vec = times, newdata = newdata,
-                               type = 'cum.haz', plot.out = F, n.sim = 200)
+                               type = 'cum.haz', plot = F, n.sim = 200)
   
   if(i == 1){ # save for later plot (of 95% confidence intervals)
     pred.ar.test.save = pred.ar.test
@@ -329,7 +329,7 @@ pred.ar.test =  haz.surv(c.ar.GJRM.noCov, eq = 1, t.vec = times, newdata = data.
                                                                                           hormon = 1), 
                              baseline = F,
                              type = 'cum.haz', pch = 19,
-                             plot.out = T, xlab = 'Follow-up time (years since surgery)', ylab = 'Baseline Cumulative Hazard',
+                             plot = T, xlab = 'Follow-up time (years since surgery)', ylab = 'Baseline Cumulative Hazard',
                              ylim = c(0, 4.5), intervals = F)
 grid(nx = NA, ny = NULL)
 
@@ -337,7 +337,7 @@ pred.ad.test =  haz.surv(c.ad.GJRM.noCov, eq = 1, t.vec = times, newdata = data.
                                                                                           hormon = 1), 
                              baseline = TRUE,
                              type = 'cum.haz', pch = 19,
-                             plot.out = T, xlab = 'Follow-up time (years since surgery)', ylab = 'Baseline Cumulative Hazard',
+                             plot = T, xlab = 'Follow-up time (years since surgery)', ylab = 'Baseline Cumulative Hazard',
                              ylim = c(0, 4.5), intervals = F)
 grid(nx = NA, ny = NULL)
 
@@ -345,7 +345,7 @@ pred.rd.test =  haz.surv(c.rd.GJRM.noCov, eq = 1, t.vec = times, newdata = data.
                                                                                           hormon = 1), 
                              baseline = TRUE,
                              type = 'cum.haz', pch = 19,
-                             plot.out = T, xlab = 'Follow-up time (years since surgery)', ylab = 'Baseline Cumulative Hazard',
+                             plot = T, xlab = 'Follow-up time (years since surgery)', ylab = 'Baseline Cumulative Hazard',
                              ylim = c(0,4.5), intervals = F)
 grid(nx = NA, ny = NULL)
 
